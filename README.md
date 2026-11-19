@@ -82,15 +82,23 @@
 
 **Диаграмма контейнеров (Containers)**
 
-Добавьте диаграмму.
+[Диаграмма контейнеров](diagrams/to-be/containers.puml)
 
 **Диаграмма компонентов (Components)**
 
-Добавьте диаграмму для каждого из выделенных микросервисов.
+- [User Service](diagrams/to-be/components/user-service.puml)
+- [Device Service](diagrams/to-be/components/device-service.puml)
+- [Heating Service](diagrams/to-be/components/heating-service.puml)
+- [Lighting Service](diagrams/to-be/components/lighting-service.puml)
+- [Gate Service](diagrams/to-be/components/gate-service.puml)
+- [Video Service](diagrams/to-be/components/video-service.puml)
+- [Telemetry Service](diagrams/to-be/components/telemetry-service.puml)
+- [Scenario Service](diagrams/to-be/components/scenario-service.puml)
 
 **Диаграмма кода (Code)**
 
-Добавьте одну диаграмму или несколько.
+- [Диаграмма классов Heating Service](diagrams/to-be/code/heating-classes.puml)
+- [Диаграмма последовательности, включение отопления](diagrams/to-be/code/heating-sequence.puml)
 
 # Задание 3. Разработка ER-диаграммы
 
