@@ -1,0 +1,233 @@
+openapi: 3.0.3
+info:
+  title: Device Service API
+  version: 1.0.0
+  description: Реестр устройств умного дома
+servers:
+  - url: http://device-service:8080/api/v1
+paths:
+  /devices:
+    post:
+      summary: Подключить новое устройство
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceCreate'
+            examples:
+              heating:
+                value:
+                  type_id: 7c1f0a52-3b7e-4c57-9d1a-2f4a6b8c9d01
+                  house_id: 1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed
+                  serial_number: WH-HEAT-00123
+                  name: Котел в подвале
+      responses:
+        '201':
+          description: Устройство подключено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+              examples:
+                heating:
+                  value:
+                    id: 3f2504e0-4f89-41d3-9a0c-0305e82c3301
+                    type_id: 7c1f0a52-3b7e-4c57-9d1a-2f4a6b8c9d01
+                    house_id: 1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed
+                    serial_number: WH-HEAT-00123
+                    name: Котел в подвале
+                    status: "off"
+                    created_at: '2025-03-10T12:00:00Z'
+        '400':
+          description: Неправильные данные в запросе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                bad_request:
+                  value:
+                    error: serial_number is required
+        '409':
+          description: Устройство с таким серийным номером уже подключено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                conflict:
+                  value:
+                    error: device already registered
+        '500':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                server_error:
+                  value:
+                    error: internal server error
+  /devices/{device_id}:
+    get:
+      summary: Получить информацию об устройстве
+      parameters:
+        - $ref: '#/components/parameters/DeviceId'
+      responses:
+        '200':
+          description: Информация об устройстве
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+              examples:
+                heating:
+                  value:
+                    id: 3f2504e0-4f89-41d3-9a0c-0305e82c3301
+                    type_id: 7c1f0a52-3b7e-4c57-9d1a-2f4a6b8c9d01
+                    house_id: 1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed
+                    serial_number: WH-HEAT-00123
+                    name: Котел в подвале
+                    status: "on"
+                    created_at: '2025-03-10T12:00:00Z'
+        '404':
+          description: Устройство не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                not_found:
+                  value:
+                    error: device not found
+        '500':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                server_error:
+                  value:
+                    error: internal server error
+  /devices/{device_id}/status:
+    patch:
+      summary: Обновить состояние устройства
+      parameters:
+        - $ref: '#/components/parameters/DeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusUpdate'
+            examples:
+              turn_on:
+                value:
+                  status: "on"
+      responses:
+        '200':
+          description: Состояние обновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Device'
+              examples:
+                heating:
+                  value:
+                    id: 3f2504e0-4f89-41d3-9a0c-0305e82c3301
+                    type_id: 7c1f0a52-3b7e-4c57-9d1a-2f4a6b8c9d01
+                    house_id: 1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed
+                    serial_number: WH-HEAT-00123
+                    name: Котел в подвале
+                    status: "on"
+                    created_at: '2025-03-10T12:00:00Z'
+        '400':
+          description: Неправильный статус
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                bad_request:
+                  value:
+                    error: unknown status
+        '404':
+          description: Устройство не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                not_found:
+                  value:
+                    error: device not found
+        '500':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                server_error:
+                  value:
+                    error: internal server error
+components:
+  parameters:
+    DeviceId:
+      name: device_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    Device:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type_id:
+          type: string
+          format: uuid
+        house_id:
+          type: string
+          format: uuid
+        serial_number:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum: ["on", "off", "offline"]
+        created_at:
+          type: string
+          format: date-time
+    DeviceCreate:
+      type: object
+      required: [type_id, house_id, serial_number]
+      properties:
+        type_id:
+          type: string
+          format: uuid
+        house_id:
+          type: string
+          format: uuid
+        serial_number:
+          type: string
+        name:
+          type: string
+    StatusUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: ["on", "off", "offline"]
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
