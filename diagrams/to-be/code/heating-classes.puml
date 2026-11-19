@@ -1,0 +1,55 @@
+@startuml
+title Heating Service. Диаграмма классов
+
+class HeatingHandler {
+  +SendCommand(c *gin.Context)
+  +GetState(c *gin.Context)
+}
+
+class CommandService {
+  +Execute(cmd Command) error
+}
+
+class StateService {
+  +Get(deviceID string) HeatingState
+  +Update(state HeatingState) error
+}
+
+class Command {
+  +ID string
+  +DeviceID string
+  +Action string
+  +TargetTemperature float64
+  +CreatedAt time.Time
+}
+
+class HeatingState {
+  +DeviceID string
+  +IsOn bool
+  +TargetTemperature float64
+  +UpdatedAt time.Time
+}
+
+interface DeviceClient {
+  +GetDevice(id string) Device
+}
+
+interface DevicePublisher {
+  +Publish(cmd Command) error
+}
+
+interface Repository {
+  +SaveCommand(cmd Command) error
+  +GetState(deviceID string) HeatingState
+  +SaveState(state HeatingState) error
+}
+
+HeatingHandler --> CommandService
+HeatingHandler --> StateService
+CommandService --> DeviceClient
+CommandService --> DevicePublisher
+CommandService --> Repository
+StateService --> Repository
+CommandService ..> Command
+StateService ..> HeatingState
+@enduml

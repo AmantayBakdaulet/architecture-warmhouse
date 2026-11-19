@@ -1,0 +1,37 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Lighting Service. Диаграмма компонентов
+
+Container(gateway, "API Gateway", "Kong")
+Container(device_svc, "Device Service", "Go")
+ContainerDb(lighting_db, "Lighting DB", "PostgreSQL")
+ContainerQueue(kafka, "Kafka", "Kafka")
+ContainerQueue(mqtt, "MQTT брокер", "EMQX")
+
+Container_Boundary(lighting_svc, "Lighting Service") {
+  Component(api, "API", "Go, Gin", "REST эндпоинты")
+  Component(commands, "Command Handler", "Go", "Обработка команд свету")
+  Component(state, "State Manager", "Go", "Текущее состояние света")
+  Component(consumer, "Scenario Consumer", "Go", "Читает команды от сценариев")
+  Component(device_client, "Device Client", "Go", "Запросы в Device Service")
+  Component(mqtt_client, "MQTT Client", "Go", "Обмен с устройством")
+  Component(repo, "Repository", "Go, pgx", "Работа с базой")
+}
+
+Rel(gateway, api, "REST")
+Rel(api, commands, "Вызывает")
+Rel(api, state, "Вызывает")
+Rel(consumer, commands, "Передает команду")
+Rel(kafka, consumer, "Команды сценариев")
+Rel(commands, device_client, "Проверяет устройство")
+Rel(device_client, device_svc, "REST")
+Rel(commands, mqtt_client, "Отправляет команду")
+Rel(mqtt_client, state, "Обновляет состояние")
+Rel(mqtt_client, mqtt, "MQTT")
+Rel(commands, repo, "Использует")
+Rel(state, repo, "Использует")
+Rel(repo, lighting_db, "SQL")
+
+SHOW_LEGEND()
+@enduml

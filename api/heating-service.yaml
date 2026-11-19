@@ -1,0 +1,168 @@
+openapi: 3.0.3
+info:
+  title: Heating Service API
+  version: 1.0.0
+  description: Управление отоплением
+servers:
+  - url: http://heating-service:8080/api/v1
+paths:
+  /heating/{device_id}/commands:
+    post:
+      summary: Отправить команду устройству
+      parameters:
+        - $ref: '#/components/parameters/DeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandCreate'
+            examples:
+              turn_on:
+                value:
+                  action: turn_on
+              set_temperature:
+                value:
+                  action: set_temperature
+                  target_temperature: 22.5
+      responses:
+        '202':
+          description: Команда принята и отправлена устройству
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Command'
+              examples:
+                accepted:
+                  value:
+                    id: 9a7b330a-a736-4f0c-8f3b-5d5e2c1a7e11
+                    device_id: 3f2504e0-4f89-41d3-9a0c-0305e82c3301
+                    action: set_temperature
+                    target_temperature: 22.5
+                    status: sent
+                    created_at: '2025-03-10T12:05:00Z'
+        '400':
+          description: Неправильная команда
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                bad_request:
+                  value:
+                    error: unknown action
+        '404':
+          description: Устройство не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                not_found:
+                  value:
+                    error: device not found
+        '500':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                server_error:
+                  value:
+                    error: internal server error
+  /heating/{device_id}/state:
+    get:
+      summary: Получить текущее состояние отопления
+      parameters:
+        - $ref: '#/components/parameters/DeviceId'
+      responses:
+        '200':
+          description: Состояние отопления
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeatingState'
+              examples:
+                state:
+                  value:
+                    device_id: 3f2504e0-4f89-41d3-9a0c-0305e82c3301
+                    is_on: true
+                    target_temperature: 22.5
+                    updated_at: '2025-03-10T12:05:03Z'
+        '404':
+          description: Устройство не найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                not_found:
+                  value:
+                    error: device not found
+        '500':
+          description: Ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                server_error:
+                  value:
+                    error: internal server error
+components:
+  parameters:
+    DeviceId:
+      name: device_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    CommandCreate:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [turn_on, turn_off, set_temperature]
+        target_temperature:
+          type: number
+    Command:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        device_id:
+          type: string
+          format: uuid
+        action:
+          type: string
+        target_temperature:
+          type: number
+        status:
+          type: string
+          enum: [sent, done, failed]
+        created_at:
+          type: string
+          format: date-time
+    HeatingState:
+      type: object
+      properties:
+        device_id:
+          type: string
+          format: uuid
+        is_on:
+          type: boolean
+        target_temperature:
+          type: number
+        updated_at:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        error:
+          type: string

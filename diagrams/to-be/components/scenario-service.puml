@@ -1,0 +1,30 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Scenario Service. Диаграмма компонентов
+
+Container(gateway, "API Gateway", "Kong")
+ContainerDb(scenario_db, "Scenario DB", "PostgreSQL")
+ContainerQueue(kafka, "Kafka", "Kafka")
+
+Container_Boundary(scenario_svc, "Scenario Service") {
+  Component(api, "API", "Go, Gin", "REST эндпоинты")
+  Component(manager, "Scenario Manager", "Go", "Создание и изменение сценариев")
+  Component(consumer, "Event Consumer", "Go", "Читает события телеметрии")
+  Component(engine, "Rule Engine", "Go", "Проверяет условия сценариев")
+  Component(publisher, "Command Publisher", "Go", "Публикует команды устройствам")
+  Component(repo, "Repository", "Go, pgx", "Работа с базой")
+}
+
+Rel(gateway, api, "REST")
+Rel(api, manager, "Вызывает")
+Rel(manager, repo, "Использует")
+Rel(kafka, consumer, "События телеметрии")
+Rel(consumer, engine, "Передает событие")
+Rel(engine, repo, "Читает сценарии")
+Rel(engine, publisher, "Вызывает")
+Rel(publisher, kafka, "Команды")
+Rel(repo, scenario_db, "SQL")
+
+SHOW_LEGEND()
+@enduml

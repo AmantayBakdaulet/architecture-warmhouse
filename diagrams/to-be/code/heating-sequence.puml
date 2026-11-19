@@ -1,0 +1,24 @@
+@startuml
+title Включение отопления. Диаграмма последовательности
+
+actor Пользователь as user
+participant "API Gateway" as gateway
+participant "Heating Service" as heating
+participant "Device Service" as device
+database "Heating DB" as db
+queue "MQTT брокер" as mqtt
+participant "Модуль отопления" as module
+
+user -> gateway: POST /heating/{device_id}/commands
+gateway -> heating: POST /heating/{device_id}/commands
+heating -> device: GET /devices/{device_id}
+device --> heating: устройство
+heating -> db: сохранить команду
+heating -> mqtt: команда turn_on
+heating --> gateway: 202 Accepted
+gateway --> user: 202 Accepted
+mqtt -> module: команда turn_on
+module -> mqtt: новое состояние
+mqtt -> heating: новое состояние
+heating -> db: обновить состояние
+@enduml

@@ -1,0 +1,79 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Теплый дом. Диаграмма контейнеров (To-Be)
+
+Person(user, "Пользователь", "Владелец дома")
+System_Ext(devices, "Устройства в доме", "Отопление, свет, ворота, датчики, устройства партнеров")
+System_Ext(cameras, "Камеры", "Видеонаблюдение")
+
+System_Boundary(warmhouse, "Теплый дом") {
+  Container(web, "Веб-приложение", "React", "Интерфейс пользователя")
+  Container(gateway, "API Gateway", "Kong", "Маршрутизация запросов, проверка токена")
+
+  Container(user_svc, "User Service", "Go", "Пользователи, дома, авторизация")
+  Container(device_svc, "Device Service", "Go", "Реестр устройств и типов устройств, подключение новых устройств")
+  Container(heating_svc, "Heating Service", "Go", "Управление отоплением")
+  Container(lighting_svc, "Lighting Service", "Go", "Управление светом")
+  Container(gate_svc, "Gate Service", "Go", "Управление воротами")
+  Container(video_svc, "Video Service", "Go", "Видеонаблюдение")
+  Container(telemetry_svc, "Telemetry Service", "Go", "Прием и хранение телеметрии")
+  Container(scenario_svc, "Scenario Service", "Go", "Сценарии пользователя")
+
+  ContainerDb(user_db, "User DB", "PostgreSQL", "Пользователи и дома")
+  ContainerDb(device_db, "Device DB", "PostgreSQL", "Устройства, типы, модули")
+  ContainerDb(heating_db, "Heating DB", "PostgreSQL", "Состояние отопления")
+  ContainerDb(lighting_db, "Lighting DB", "PostgreSQL", "Состояние света")
+  ContainerDb(gate_db, "Gate DB", "PostgreSQL", "Состояние ворот")
+  ContainerDb(video_db, "Video DB", "PostgreSQL", "Камеры и записи")
+  ContainerDb(telemetry_db, "Telemetry DB", "TimescaleDB", "История показаний")
+  ContainerDb(scenario_db, "Scenario DB", "PostgreSQL", "Сценарии")
+  ContainerDb(video_storage, "Хранилище видео", "S3", "Файлы записей")
+
+  ContainerQueue(kafka, "Kafka", "Kafka", "События между сервисами")
+  ContainerQueue(mqtt, "MQTT брокер", "EMQX", "Обмен сообщениями с устройствами")
+}
+
+Rel(user, web, "Пользуется", "HTTPS")
+Rel(web, gateway, "Запросы", "HTTPS, JSON")
+
+Rel(gateway, user_svc, "REST")
+Rel(gateway, device_svc, "REST")
+Rel(gateway, heating_svc, "REST")
+Rel(gateway, lighting_svc, "REST")
+Rel(gateway, gate_svc, "REST")
+Rel(gateway, video_svc, "REST")
+Rel(gateway, telemetry_svc, "REST")
+Rel(gateway, scenario_svc, "REST")
+
+Rel(user_svc, user_db, "Читает и пишет", "SQL")
+Rel(device_svc, device_db, "Читает и пишет", "SQL")
+Rel(heating_svc, heating_db, "Читает и пишет", "SQL")
+Rel(lighting_svc, lighting_db, "Читает и пишет", "SQL")
+Rel(gate_svc, gate_db, "Читает и пишет", "SQL")
+Rel(video_svc, video_db, "Читает и пишет", "SQL")
+Rel(video_svc, video_storage, "Сохраняет записи", "S3 API")
+Rel(telemetry_svc, telemetry_db, "Читает и пишет", "SQL")
+Rel(scenario_svc, scenario_db, "Читает и пишет", "SQL")
+
+Rel(heating_svc, device_svc, "Получает данные устройства", "REST")
+Rel(lighting_svc, device_svc, "Получает данные устройства", "REST")
+Rel(gate_svc, device_svc, "Получает данные устройства", "REST")
+Rel(video_svc, device_svc, "Получает данные устройства", "REST")
+
+Rel(heating_svc, mqtt, "Отправляет команды, получает состояние", "MQTT")
+Rel(lighting_svc, mqtt, "Отправляет команды, получает состояние", "MQTT")
+Rel(gate_svc, mqtt, "Отправляет команды, получает состояние", "MQTT")
+Rel(telemetry_svc, mqtt, "Получает телеметрию", "MQTT")
+
+Rel(telemetry_svc, kafka, "Публикует события телеметрии")
+Rel(scenario_svc, kafka, "Читает телеметрию, публикует команды")
+Rel(heating_svc, kafka, "Читает команды сценариев")
+Rel(lighting_svc, kafka, "Читает команды сценариев")
+Rel(gate_svc, kafka, "Читает команды сценариев")
+
+Rel(devices, mqtt, "Телеметрия, состояние, команды", "MQTT")
+Rel(cameras, video_svc, "Видеопоток", "RTSP")
+
+SHOW_LEGEND()
+@enduml
