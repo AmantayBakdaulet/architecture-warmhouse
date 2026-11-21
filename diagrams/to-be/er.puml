@@ -1,0 +1,80 @@
+@startuml
+title Теплый дом. ER-диаграмма
+
+entity users {
+  * id : uuid <<PK>>
+  --
+  email : varchar
+  password_hash : varchar
+  name : varchar
+  created_at : timestamp
+}
+
+entity houses {
+  * id : uuid <<PK>>
+  --
+  user_id : uuid <<FK>>
+  name : varchar
+  address : varchar
+  created_at : timestamp
+}
+
+entity modules {
+  * id : uuid <<PK>>
+  --
+  house_id : uuid <<FK>>
+  serial_number : varchar
+  name : varchar
+  status : varchar
+  created_at : timestamp
+}
+
+entity device_types {
+  * id : uuid <<PK>>
+  --
+  name : varchar
+  protocol : varchar
+  description : varchar
+}
+
+entity devices {
+  * id : uuid <<PK>>
+  --
+  type_id : uuid <<FK>>
+  house_id : uuid <<FK>>
+  module_id : uuid <<FK>>
+  serial_number : varchar
+  name : varchar
+  status : varchar
+  created_at : timestamp
+}
+
+entity telemetry_data {
+  * id : bigint <<PK>>
+  --
+  device_id : uuid <<FK>>
+  value : float
+  unit : varchar
+  created_at : timestamp
+}
+
+entity scenarios {
+  * id : uuid <<PK>>
+  --
+  house_id : uuid <<FK>>
+  device_id : uuid <<FK>>
+  name : varchar
+  condition : jsonb
+  action : jsonb
+  is_active : boolean
+}
+
+users ||--o{ houses
+houses ||--o{ modules
+houses ||--o{ devices
+modules ||--o{ devices
+device_types ||--o{ devices
+devices ||--o{ telemetry_data
+houses ||--o{ scenarios
+devices ||--o{ scenarios
+@enduml

@@ -1,0 +1,29 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Telemetry Service. Диаграмма компонентов
+
+Container(gateway, "API Gateway", "Kong")
+ContainerDb(telemetry_db, "Telemetry DB", "TimescaleDB")
+ContainerQueue(kafka, "Kafka", "Kafka")
+ContainerQueue(mqtt, "MQTT брокер", "EMQX")
+
+Container_Boundary(telemetry_svc, "Telemetry Service") {
+  Component(api, "API", "Go, Gin", "REST эндпоинты для просмотра телеметрии")
+  Component(subscriber, "MQTT Subscriber", "Go", "Получает показания от устройств")
+  Component(processor, "Telemetry Processor", "Go", "Проверяет и сохраняет показания")
+  Component(publisher, "Event Publisher", "Go", "Публикует события телеметрии")
+  Component(repo, "Repository", "Go, pgx", "Работа с базой")
+}
+
+Rel(gateway, api, "REST")
+Rel(api, repo, "Читает историю")
+Rel(mqtt, subscriber, "MQTT")
+Rel(subscriber, processor, "Передает показания")
+Rel(processor, repo, "Сохраняет")
+Rel(processor, publisher, "Вызывает")
+Rel(publisher, kafka, "События телеметрии")
+Rel(repo, telemetry_db, "SQL")
+
+SHOW_LEGEND()
+@enduml
